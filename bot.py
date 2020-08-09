@@ -1,5 +1,6 @@
 import os
 import time
+import math
 from dotenv import load_dotenv
 import telegram
 from telegram.ext import (
@@ -14,6 +15,7 @@ load_dotenv()
 TOKEN = os.getenv('TOKEN')
 CHAT_ID = os.getenv('CHAT_ID')
 BOT = telegram.Bot(TOKEN)
+WARNINGS = {}
 
 
 def welcome(update, context):
@@ -26,7 +28,7 @@ def welcome(update, context):
 
 
 def check_url(update):
-    '''Chack of a post has a link in it.'''
+    '''Check of a post has a link in it.'''
     has_url = False
     if update.message.entities:
         for entity in update.message.entities:
@@ -40,12 +42,22 @@ def check_status(bot, user):
 
 
 def warn_against_links(update, context, *args, **kwargs):
-    """Echo the user message."""
+    """Warn non-admin users who post links on the wall."""
+    def ordinal(n): return "%d%s" % (
+        n, "tsnrhtdd"[(math.floor(n/10) % 10 != 1)*(n % 10 < 4)*n % 10::4])
     if check_url(update):
         user = update.message.from_user
         if check_status(BOT, user) not in ['creator', 'administrator']:
-            update.message.reply_text(
-                f'{user.first_name.title()} please do not post links on the wall.')
+            if user.id in WARNINGS:
+                WARNINGS[user.id] += 1
+                update.message.reply_text(
+                    f'{user.first_name.title()} please do not post links on the wall.\nThis is your {ordinal(WARNINGS[user.id])} warning.\n{5-WARNINGS[user.id]} warnings left to be removed from the group.')
+                if WARNINGS[user.id] > 5:
+                    BOT.kick_chat_member(update.message.chat.id, *args, **kwargs)
+            else:
+                WARNINGS[user.id] = 1
+                update.message.reply_text(
+                    f'{user.first_name.title()} please do not post links on the wall.\nThis is your {ordinal(WARNINGS[user.id])} warning.\n{5-WARNINGS[user.id]} warnings left to be removed from the group.')
 
 
 def main():
