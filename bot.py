@@ -9,6 +9,7 @@ from telegram.ext import (
     MessageHandler,
     Filters,
 )
+from telegram import ChatPermissions
 
 load_dotenv()
 
@@ -51,13 +52,15 @@ def warn_against_links(update, context, *args, **kwargs):
             if user.id in WARNINGS:
                 WARNINGS[user.id] += 1
                 update.message.reply_text(
-                    f'{user.first_name.title()} please do not post links on the wall.\nThis is your {ordinal(WARNINGS[user.id])} warning.\n{5-WARNINGS[user.id]} warnings left to be removed from the group.')
+                    f'{user.first_name.title()} please do not post links on the wall.\nThis is your {ordinal(WARNINGS[user.id])} warning.\n{5-WARNINGS[user.id]} warnings left before ban.')
                 if WARNINGS[user.id] > 5:
-                    BOT.kick_chat_member(update.message.chat.id, *args, **kwargs)
+                    # BOT.kick_chat_member(update.message.chat.id, *args, **kwargs)
+                    permission = ChatPermissions(can_send_messages=False)
+                    BOT.restrict_chat_member(CHAT_ID, user.id, permission)
             else:
                 WARNINGS[user.id] = 1
                 update.message.reply_text(
-                    f'{user.first_name.title()} please do not post links on the wall.\nThis is your {ordinal(WARNINGS[user.id])} warning.\n{5-WARNINGS[user.id]} warnings left to be removed from the group.')
+                    f'{user.first_name.title()} please do not post links on the wall.\nThis is your {ordinal(WARNINGS[user.id])} warning.\n{5-WARNINGS[user.id]} warnings left before ban.')
 
 
 def main():
