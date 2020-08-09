@@ -12,9 +12,8 @@ from telegram.ext import (
 load_dotenv()
 
 TOKEN = os.getenv('TOKEN')
-CHANNEL = os.getenv('CHANNEL')
-
-channel_name = f'@{CHANNEL}'
+CHAT_ID = os.getenv('CHAT_ID')
+BOT = telegram.Bot(TOKEN)
 
 
 def welcome(update, context):
@@ -36,12 +35,17 @@ def check_url(update):
     return has_url
 
 
-def warn_against_links(update, context):
+def check_status(bot, user):
+    return bot.get_chat_member(CHAT_ID, user.id).status
+
+
+def warn_against_links(update, context, *args, **kwargs):
     """Echo the user message."""
     if check_url(update):
         user = update.message.from_user
-        update.message.reply_text(
-            f'{user.first_name.title()} please do not post links on the wall.')
+        if check_status(BOT, user) not in ['creator', 'administrator']:
+            update.message.reply_text(
+                f'{user.first_name.title()} please do not post links on the wall.')
 
 
 def main():
