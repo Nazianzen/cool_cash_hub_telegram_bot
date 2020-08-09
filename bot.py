@@ -50,13 +50,13 @@ def warn_against_links(update, context, *args, **kwargs):
         user = update.message.from_user
         if check_status(BOT, user) not in ['creator', 'administrator']:
             if user.id in WARNINGS:
-                WARNINGS[user.id] += 1
-                update.message.reply_text(
-                    f'{user.first_name.title()} please do not post links on the wall.\nThis is your {ordinal(WARNINGS[user.id])} warning.\n{5-WARNINGS[user.id]} warnings left before ban.')
                 if WARNINGS[user.id] >= 5:
                     # BOT.kick_chat_member(update.message.chat.id, *args, **kwargs)
                     permission = ChatPermissions(can_send_messages=False)
                     BOT.restrict_chat_member(CHAT_ID, user.id, permission)
+                WARNINGS[user.id] += 1
+                update.message.reply_text(
+                    f'{user.first_name.title()} please do not post links on the wall.\nThis is your {ordinal(WARNINGS[user.id])} warning.\n{5-WARNINGS[user.id]} warnings left before ban.')
             else:
                 WARNINGS[user.id] = 1
                 update.message.reply_text(
